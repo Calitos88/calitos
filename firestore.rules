@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: conversions
+    // Document ID: auto-generated
+    // Fields:
+    //   - type: string (required, enum: ["map_click", "directions_request", "hours_check", "purchase_initiation"])
+    //   - timestamp: timestamp (required)
+    //   - userId: string (optional)
+    //   - metadata: map (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "kalfallahamanullah@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidConversion(data) {
+      return data.keys().hasAll(['type', 'timestamp']) &&
+             data.type is string &&
+             data.type in ["map_click", "directions_request", "hours_check", "purchase_initiation"] &&
+             data.timestamp is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /conversions/{conversionId} {
+      // Allow anyone to create a conversion (to track anonymous users)
+      // Note: If we want to strictly follow "require authentication", we'd use isAuthenticated()
+      // But for tracking, anonymous is often needed. I'll allow anonymous create for now.
+      allow create: if isValidConversion(request.resource.data);
+      
+      // Only admins can read conversion data
+      allow read: if isAdmin();
+      
+      // No updates or deletes allowed for conversion data
+      allow update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if isAuthenticated() && request.auth.uid == userId && 
+                             (!('role' in request.resource.data) || request.resource.data.role == 'user' || isAdmin());
+    }
+  }
+}

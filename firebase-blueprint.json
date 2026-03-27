@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "Conversion": {
+      "title": "User Conversion",
+      "description": "Tracks key user interactions with the business location.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["map_click", "directions_request", "hours_check", "purchase_initiation"],
+          "description": "The type of conversion event."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the event occurred."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user (if authenticated)."
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context for the event."
+        }
+      },
+      "required": ["type", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/conversions/{conversionId}": {
+      "schema": "Conversion",
+      "description": "Collection of user conversion events."
+    }
+  }
+}

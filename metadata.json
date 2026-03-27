@@ -1,0 +1,5 @@
+{
+  "name": "PrimeLink Business Hub",
+  "description": "A full-stack application for PrimeLink Business Hub Ltd, featuring Google Maps integration and engagement tracking.",
+  "requestFramePermissions": ["geolocation"]
+}
